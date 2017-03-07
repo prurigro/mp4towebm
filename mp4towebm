@@ -1,7 +1,6 @@
 #!/usr/bin/env bash
 
 new_ext='.webm'
-start_dir="$PWD"
 
 # Colours
 [[ -t 1 ]] && {
@@ -20,12 +19,11 @@ function help {
     script_name="${0//*\/}"
     printf '\n%s\n\n'      "${c_w}Convert mp4 videos to webm with ffmpeg$c_c"
     printf '%s\n'          "${c_b}SYNOPSIS$c_c"
-    printf '  %s\n'        "$c_y$script_name $c_d[${c_r}QUALITY$c_d] $c_d[${c_r}FILES$c_d]$c_c"
+    printf '  %s\n'        "$c_y$script_name $c_d[${c_r}QUALITY$c_d]$c_c"
     printf '  %s\n\n'      "$c_y$script_name $c_w-h$c_d|$c_w--help$c_c"
     printf '%s\n'          "${c_b}EXAMPLES$c_c"
-    printf '  %-56s%s\n'   "$c_y$script_name ${c_w}8M$c_c" 'Convert all files in current directory with 8M bitrate'
-    printf '  %-56s%s\n' "$c_y$script_name ${c_w}4M f1.mp4 f2.mp4 f3.mp4$c_c" 'Convert certain files with 4M bitrate'
-    printf '  %-56s%s\n\n' "$c_y$script_name ${c_w}3M file_*.mp4 more_*.mp4$c_c" 'Convert certain files with 3M bitrate'
+    printf '  %-27s%s\n'   "$c_y$script_name$c_c" 'Convert all files in current directory with autodetected bitrate'
+    printf '  %-34s%s\n\n' "$c_y$script_name ${c_w}8M$c_c" 'Convert all files in current directory with a bitrate of 8M'
 }
 
 function error {
@@ -46,47 +44,31 @@ function convert_mp4 {
     else
         num_cores=1
     fi
+
     printf '%s %s\n' "$c_b==>" "$c_w$num_cores cores detected$c_c"
 
     # Check and see if the folder "converting" exists. If it doesn't then we want to create it.
-    [[ -d "$start_dir/converting" ]] \
-        || install -d "$start_dir/converting"
+    [[ -d converting ]] || install -d converting
 
-    # Move video into converting and change directories
-    mv "$1" "$start_dir/converting/"
-    pushd "$start_dir/converting" >/dev/null
-
-    # Figure out old extension
+    # Determine old extension
     old_ext="${1/*\.}"
 
+    # Determine new filename
+    new_file="${1/\.${old_ext}}${new_ext}"
+
     # Convert video
-    ffmpeg -i "$1" -c:v libvpx -crf 4 -q:v 10 -b:v "$bitrate" -c:a libvorbis -threads $num_cores "${1/\.${old_ext}}${new_ext}"
-
-    # Check to see if the folder "converted" exists. If it doesn't then we want to create it.
-    [[ -d "$start_dir/converted" ]] \
-        || install -d "$start_dir/converted"
-
-    # Check and see if the folder "created" exists. If it doesn't then we want to create it.
-    [[ -d "$start_dir/created" ]] \
-        || install -d "$start_dir/created"
-
-    # Move old mp4 files into "converted" folder
-    mv "$1" "$start_dir/converted/"
+    ffmpeg -i "$1" -c:v libvpx -crf 4 -q:v 10 -b:v "$2" -c:a libvorbis -threads "$num_cores" "converting/$new_file"
 
     # Move new webm files into "created" folder
-    mv "${1/\.${old_ext}}${new_ext}" "$start_dir/created/"
+    mkclean --doctype 4 --keep-cues --optimize "converting/$new_file" "$new_file"
 
-    # Get out of the converting directory
-    popd >/dev/null
+    # Remove the converting file and directory
+    rm "converting/$new_file"
+    rmdir converting
 }
 
 type -P ffmpeg >/dev/null || {
     error 'The ffmpeg executable was not found in $PATH'
-    exit 1
-}
-
-[[ -n "$1" ]] || {
-    error 'The desired bitrate of the resulting video must be passed as the first argument'
     exit 1
 }
 
@@ -95,20 +77,16 @@ type -P ffmpeg >/dev/null || {
     exit 0
 }
 
-bitrate="$1"
-shift
-
 if [[ -n "$1" ]]; then
-    for video in "$@"; do
-        if [[ -f "$video" ]]; then
-            convert_mp4 "$video"
-        else
-            error "No video file(s) matching '$video'"
-        fi
-    done
+    bitrate="$1"
 else
-    for video in *.mp4; do
-        convert_mp4 "$video"
-    done
+    bitrate=auto
 fi
 
+for video in *.mp4; do
+    if [[ "$bitrate" = 'auto' ]]; then
+        convert_mp4 "$video" "$(ffmpeg -i "$video" 2>&1 | grep 'Duration' | grep -oe '[0-9][0-9][0-9]* kb/s' | sed 's| *kb/s||' | sed -r 's|([0-9])([0-9]*)|\1.\2M|')"
+    else
+        convert_mp4 "$video" "$bitrate"
+    fi
+done
