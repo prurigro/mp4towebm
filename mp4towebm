@@ -28,6 +28,7 @@ function help {
 
 function error {
     printf '%s %s\n' "${c_r}ERROR:$c_c" "$c_w$1$c_c" >&2
+    exit 1
 }
 
 function convert_mp4 {
@@ -67,10 +68,11 @@ function convert_mp4 {
     rmdir converting
 }
 
-type -P ffmpeg >/dev/null || {
-    error 'The ffmpeg executable was not found in $PATH'
-    exit 1
-}
+type -P ffmpeg >/dev/null \
+    || error 'The ffmpeg executable was not found in $PATH'
+
+type -P mkclean >/dev/null \
+    || error 'The mkclean executable was not found in $PATH'
 
 [[ "$1" = '-h' || "$1" = '--help' ]] && {
     help
