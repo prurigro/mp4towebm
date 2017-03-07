@@ -1,33 +1,15 @@
 # mp4towebm
 
-Convert `mp4` videos to `webm` with [ffmpeg](https://www.ffmpeg.org/).
+Convert `mp4` videos in the current directory to optimized `webm` with [ffmpeg](https://www.ffmpeg.org/) and [mkclean](https://www.matroska.org/downloads/mkclean.html).
 
 ### How to use
 
-You need to specify a bitrate. For great quality, use `8M` as the first argument. For alright quality, use `3M` as the first argument. You can specify whatever you want. The higher the bitrate, the larger the filesize will be. All other arguments are treated as converting certain files only.
+Run this script from a directory containing mp4 files, optionally specifying a bitrate if you don't want to use the one from the source video.
 
 ```bash
-# Convert all files in current directory with 8M bitrate
+# Convert all files in current directory with autodetected bitrate
+mp4towebm
+
+# Convert all files in current directory with a bitrate of 8M
 mp4towebm 8M
-
-# Convert certain files with 4M bitrate
-mp4towebm 4M file.mp4 other_file.mp4 last_file.mp4
-
-# Convert certain files with 3M bitrate
-mp4towebm 3M new_*.mp4 to_process*.mp4
-
-# Recursively convert all mp4 files with 8M bitrate
-find . -type f -iname "*.mp4" -exec mp4towebm 8M '{}' \;
 ```
-
-### Folder Structure
-
-You can run `mp4towebm` in any directory, but it will create three folders during the process:
-
-```
-converting
-created
-converted
-```
-
-If any of the folders do not exist it will create them. The `mp4` file will be moved into `converting` and then be converted there. All of the `webm` files will be moved to the `created` folder, and all of the `mp4` files will be moved to the `converted` folder when it's done.
