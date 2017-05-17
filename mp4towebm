@@ -87,8 +87,9 @@ fi
 
 for video in *.mp4; do
     # Autodetect the bitrate if one hasn't been set
-    [[ "$bitrate" = 'auto' ]] \
-        && bitrate=$(ffmpeg -i "$video" 2>&1 | grep 'Duration' | grep -oe '[0-9][0-9][0-9]* [a-z]b/s' | sed 's|b/s||;s| ||')
-
-    convert_mp4 "$video" "$bitrate"
+    if [[ "$bitrate" = 'auto' ]]; then
+        convert_mp4 "$video" "$(ffmpeg -i "$video" 2>&1 | grep 'Duration' | grep -oe '[0-9][0-9][0-9]* [a-z]b/s' | sed 's|b/s||;s| ||')"
+    else
+        convert_mp4 "$video" "$bitrate"
+    fi
 done
