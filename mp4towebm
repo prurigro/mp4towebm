@@ -19,11 +19,11 @@ function help {
     script_name="${0//*\/}"
     printf '\n%s\n\n'      "${c_w}Convert mp4 videos to webm with ffmpeg$c_c"
     printf '%s\n'          "${c_b}SYNOPSIS$c_c"
-    printf '  %s\n'        "$c_y$script_name $c_d[${c_r}QUALITY$c_d]$c_c"
+    printf '  %s\n'        "$c_y$script_name ${c_d}[${c_r}QUALITY$c_d]$c_c"
     printf '  %s\n\n'      "$c_y$script_name $c_w-h$c_d|$c_w--help$c_c"
     printf '%s\n'          "${c_b}EXAMPLES$c_c"
-    printf '  %-27s%s\n'   "$c_y$script_name$c_c" 'Convert all files in current directory with autodetected bitrate'
-    printf '  %-34s%s\n\n' "$c_y$script_name ${c_w}8M$c_c" 'Convert all files in current directory with a bitrate of 8M'
+    printf '  %-26s%s\n'   "$c_y$script_name$c_c" 'Convert all files in current directory with their autodetected bitrates'
+    printf '  %-33s%s\n\n' "$c_y$script_name ${c_w}1.5$c_c" 'Convert all files in current directory with 1.5 times their autodetected bitrates'
 }
 
 function error {
@@ -80,16 +80,11 @@ type -P mkclean >/dev/null \
 }
 
 if [[ -n "$1" ]]; then
-    bitrate="$1"
+    bitrate_multiple="$1"
 else
-    bitrate=auto
+    bitrate_multiple=1
 fi
 
 for video in *.mp4; do
-    # Autodetect the bitrate if one hasn't been set
-    if [[ "$bitrate" = 'auto' ]]; then
-        convert_mp4 "$video" "$(ffmpeg -i "$video" 2>&1 | grep 'Duration' | grep -oe '[0-9][0-9][0-9]* [a-z]b/s' | sed 's|b/s||;s| ||')"
-    else
-        convert_mp4 "$video" "$bitrate"
-    fi
+    convert_mp4 "$video" "$(bc <<< "$(ffmpeg -i "$video" 2>&1 | grep 'Duration' | grep -oe '[0-9][0-9][0-9]* [a-z]b/s' | sed 's|b/s||;s| ||;s|k$||') * $bitrate_multiple")k"
 done
