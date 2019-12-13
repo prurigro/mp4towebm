@@ -51,14 +51,20 @@ function convert_mp4 {
     # Check and see if the folder "converting" exists. If it doesn't then we want to create it.
     [[ -d converting ]] || install -d converting
 
+    # Store the filename then drop it from $@
+    filename="$1"
+    shift
+
     # Determine old extension
-    old_ext="${1/*\.}"
+    old_ext="${filename/*\.}"
 
     # Determine new filename
-    new_file="${1/\.${old_ext}}${new_ext}"
+    new_file="${filename/\.${old_ext}}${new_ext}"
 
     # Convert video
-    ffmpeg -i "$1" -c:v libvpx -crf 4 -q:v 10 -b:v "$2" -c:a libvorbis -threads "$num_cores" "converting/$new_file"
+    ffmpeg -i "$filename" -c:v libvpx -crf 32 -q:v 10 -b:v 0 -c:a libvorbis -threads "$num_cores" "$@" -pass 1 -y -f webm /dev/null
+    ffmpeg -i "$filename" -c:v libvpx -crf 36 -q:v 10 -b:v 0 -c:a libvorbis -threads "$num_cores" "$@" -pass 2 "converting/$new_file"
+    [[ -f ffmpeg2pass-0.log ]] && rm ffmpeg2pass-0.log
 
     # Move new webm files into "created" folder
     mkclean --doctype 4 --keep-cues --optimize "converting/$new_file" "$new_file"
@@ -86,5 +92,5 @@ else
 fi
 
 for video in *.mp4; do
-    convert_mp4 "$video" "$(bc <<< "$(ffmpeg -i "$video" 2>&1 | grep 'Duration' | grep -oe '[0-9][0-9][0-9]* [a-z]b/s' | sed 's|b/s||;s| ||;s|k$||') * $bitrate_multiple")k"
+    convert_mp4 "$video" "$@"
 done
