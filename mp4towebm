@@ -19,11 +19,11 @@ function help {
     script_name="${0//*\/}"
     printf '\n%s\n\n'      "${c_w}Convert mp4 videos to webm with ffmpeg$c_c"
     printf '%s\n'          "${c_b}SYNOPSIS$c_c"
-    printf '  %s\n'        "$c_y$script_name ${c_d}[${c_r}QUALITY$c_d]$c_c"
+    printf '  %s\n'        "$c_y$script_name ${c_d}[${c_r}FFMPEG OPTIONS$c_d]$c_c"
     printf '  %s\n\n'      "$c_y$script_name $c_w-h$c_d|$c_w--help$c_c"
     printf '%s\n'          "${c_b}EXAMPLES$c_c"
-    printf '  %-26s%s\n'   "$c_y$script_name$c_c" 'Convert all files in current directory with their autodetected bitrates'
-    printf '  %-33s%s\n\n' "$c_y$script_name ${c_w}1.5$c_c" 'Convert all files in current directory with 1.5 times their autodetected bitrates'
+    printf '  %-26s%s\n'   "$c_y$script_name$c_c" 'Convert all files in current directory'
+    printf '  %-33s%s\n\n' "$c_y$script_name ${c_w}-an$c_c" 'Convert all files in current directory with the -an flag passed to ffmpeg'
 }
 
 function error {
@@ -84,12 +84,6 @@ type -P mkclean >/dev/null \
     help
     exit 0
 }
-
-if [[ -n "$1" ]]; then
-    bitrate_multiple="$1"
-else
-    bitrate_multiple=1
-fi
 
 for video in *.mp4; do
     convert_mp4 "$video" "$@"
