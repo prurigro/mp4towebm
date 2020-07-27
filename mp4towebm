@@ -62,8 +62,8 @@ function convert_mp4 {
     new_file="${filename/\.${old_ext}}${new_ext}"
 
     # Convert video
-    ffmpeg -i "$filename" -c:v libvpx -crf 35 -q:v 10 -b:v 0 -c:a libvorbis -threads "$num_cores" "$@" -pass 1 -y -f webm /dev/null
-    ffmpeg -i "$filename" -c:v libvpx -crf 35 -q:v 10 -b:v 0 -c:a libvorbis -threads "$num_cores" "$@" -pass 2 "converting/$new_file"
+    ffmpeg -i "$filename" -c:v libvpx-vp9 -crf 35 -q:v 10 -b:v 0 -c:a libvorbis -threads "$num_cores" "$@" -pass 1 -y -f webm /dev/null
+    ffmpeg -i "$filename" -c:v libvpx-vp9 -crf 35 -q:v 10 -b:v 0 -c:a libvorbis -threads "$num_cores" "$@" -pass 2 "converting/$new_file"
     [[ -f ffmpeg2pass-0.log ]] && rm ffmpeg2pass-0.log
 
     # Move new webm files into "created" folder
