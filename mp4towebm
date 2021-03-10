@@ -48,6 +48,12 @@ function convert_mp4 {
 
     printf '%s %s\n' "$c_b==>" "$c_w$num_cores cores detected$c_c"
 
+    # If the number of cores is greater than 16, use the recommended maximum of 16
+    if (( num_cores >= 16 )); then
+        num_cores=16
+        printf '%s %s\n' "$c_b==>" "${c_w}Using the recommended maximum of 16 cores"
+    fi
+
     # Check and see if the folder "converting" exists. If it doesn't then we want to create it.
     [[ -d converting ]] || install -d converting
 
